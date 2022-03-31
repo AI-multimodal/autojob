@@ -1,12 +1,5 @@
 # autojob
 
-.. image:: https://img.shields.io/travis/x94carbone/autojob.svg
-        :target: https://travis-ci.org/x94carbone/autojob
-
-.. image:: https://img.shields.io/pypi/v/autojob.svg
-        :target: https://pypi.python.org/pypi/autojob
-
-
 Simple utility for controlling linux jobs and handling error tracking in scientific code.
 
 * Free software: 3-clause BSD license
