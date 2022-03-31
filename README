@@ -1,6 +1,4 @@
-=======
-autojob
-=======
+# autojob
 
 .. image:: https://img.shields.io/travis/x94carbone/autojob.svg
         :target: https://travis-ci.org/x94carbone/autojob
@@ -14,7 +12,6 @@ Simple utility for controlling linux jobs and handling error tracking in scienti
 * Free software: 3-clause BSD license
 * Documentation: (COMING SOON!) https://x94carbone.github.io/autojob.
 
-Features
---------
+## Features
 
 * TODO
