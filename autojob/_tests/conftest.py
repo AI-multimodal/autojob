@@ -41,6 +41,11 @@ class DummyDirectories(TemporaryDirectory):
                 for inp in input_files[x2]:
                     (path / Path(inp)).touch()
 
+                # Write the dummy submit scripts for everything except for
+                # mp-390
+                if x1 != "mp-390":
+                    (path / Path("submit.sbatch")).touch()
+
         return name
 
 
