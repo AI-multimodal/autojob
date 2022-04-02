@@ -78,7 +78,7 @@ git commit -m "Your detailed description of your changes."
 git push origin name-of-your-bugfix-or-feature
 ````
 
-7. Submit a pull request through the GitHub website.
+6. Submit a pull request through the GitHub website.
 
 ## Pull Request Guidelines
 
