@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from autojob.file_utils import run_command
+from autojob.file_utils import exhaustive_directory_search, run_command
 
 
 DEFAULT_INPUT_FILES = {
@@ -126,18 +126,46 @@ def check_FEFF_job_status(root):
     return True if sum(in_lines) == 1 else False
 
 
-def generate_report(root, filename, identifiers=DEFAULT_INPUT_FILES):
-    """Generates a report of which jobs have finished, which are still ongoing
-    and which have failed.
+def check_job_status(root, calculation_type):
+    """Summary
 
     Parameters
     ----------
     root : TYPE
         Description
-    filename : TYPE
+    calculation_type : TYPE
         Description
-    identifiers : TYPE, optional
-        Description
+    """
+
+    if calculation_type == "FEFF":
+        return check_FEFF_job_status(root)
+    elif calculation_type == "VASP":
+        return check_VASP_job_status(root)
+
+    raise ValueError(f"Unknown calculation type {calculation_type}")
+
+
+def generate_report(root, filename, identifiers=DEFAULT_INPUT_FILES):
+    """Generates a report of which jobs have finished, which are still ongoing
+    and which have failed. Currently, returns True if the job completed with
+    seemingly no issues, and False otherwise.
+
+    .. important::
+
+        Currently tested on: VASP 6.2.1, FEFF 9.9.1.
+
+    Parameters
+    ----------
+    root : os.PathLike
+        Root location for the exhaustive directory search.
+    filename : str
+        Looks exhaustively in root for directories containing a file matching
+        this name.
+    identifiers : dict, optional
+        A dictionary containing strings as keys, which identify the computation
+        type, and sets as values, which identify input files that all must be
+        contained in the directory to identify the directory as corresponding
+        to a certain computation type. Default is DEFAULT_INPUT_FILES.
 
     Notes
     -----
@@ -145,9 +173,22 @@ def generate_report(root, filename, identifiers=DEFAULT_INPUT_FILES):
     - VASP: If the job completed, the OUTCAR file will contain timing
       information (see e.g. here: github.com/aiida-vasp/aiida-vasp/issues/287).
     - FEFF: If the job completed, there will be a non-empty xmu.dat file.
+
+    Returns
+    -------
+    dict
+        A dictionary with keys as the paths to the directories checked and
+        boolean values, indicating the success status of the calculation.
     """
 
     # Get the directories matching the filename of the directory search
-    # directories = exhaustive_directory_search(root, filename)
-    # TODO
-    return
+    directories = exhaustive_directory_search(root, filename)
+
+    # For each directory in the tree, determine the type of calculation that
+    # was run.
+    calculation_types = {dd: check_computation_type(dd) for dd in directories}
+
+    # Get the statuses
+    status = {dd: calculation_types[dd] for dd in calculation_types.keys()}
+
+    return status
