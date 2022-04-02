@@ -24,14 +24,14 @@ class DummyDirectories(TemporaryDirectory):
             "mp-25433",
             "mp-655656",
             "mvc-11600",
-            "mp-390",
+            "no-submit-script",
             "mp-685151",
         ]
 
-        d2 = ["FEFF-XANES", "VASP"]
+        d2 = ["FEFF", "VASP"]
 
         input_files = {
-            "FEFF-XANES": ["feff.inp"],
+            "FEFF": ["feff.inp"],
             "VASP": ["INCAR", "KPOINTS", "POSCAR", "POTCAR"],
         }
 
@@ -44,8 +44,8 @@ class DummyDirectories(TemporaryDirectory):
                     (path / Path(inp)).touch()
 
                 # Write the dummy submit scripts for everything except for
-                # mp-390
-                if x1 != "mp-390":
+                # no-submit-script
+                if x1 != "no-submit-script":
                     (path / Path("submit.sbatch")).touch()
 
         return name

@@ -6,8 +6,8 @@ from autojob.file_utils import exhaustive_directory_search, run_command
 
 
 DEFAULT_INPUT_FILES = {
-    "FEFF": set(["inp.feff"]),
-    "VASP": set(["INCAR", "POSCAR", "KPOINTS", "POTCAR"]),
+    "FEFF": {"feff.inp"},
+    "VASP": {"INCAR", "POSCAR", "KPOINTS", "POTCAR"},
 }
 
 
@@ -27,8 +27,11 @@ def check_computation_type(root):
         options are found in DEFAULT_INPUT_FILES.
     """
 
-    contained = set([xx.stem for xx in list(Path(root).iterdir())])
-    overlap = {key: contained == value for key, value in DEFAULT_INPUT_FILES}
+    contained = {xx.parts[-1] for xx in list(Path(root).iterdir())}
+    overlap = {
+        key: value.issubset(contained)
+        for key, value in DEFAULT_INPUT_FILES.items()
+    }
 
     # Check to see if for some reason there are multiple computations' input
     # files in one directory. This obvious is a problem.
