@@ -24,7 +24,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install standard requirements
+    - name: Setup and install standard requirements
       shell: bash -l {0}
       run: |
         set -vxeuo pipefail
@@ -44,3 +44,4 @@ jobs:
       run: |
         set -vxeuo pipefail
         coverage run -m pytest -v
+        coverage report
