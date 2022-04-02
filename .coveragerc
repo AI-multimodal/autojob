@@ -1,0 +1,14 @@
+[run]
+source =
+    autojob
+[report]
+omit =
+    */python?.?/*
+    */site-packages/nose/*
+    # ignore _version.py and versioneer.py
+    .*version.*
+    *_version.py
+    autojob/_tests/*
+
+exclude_lines =
+    if __name__ == '__main__':
