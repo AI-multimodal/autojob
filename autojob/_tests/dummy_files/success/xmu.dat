@@ -1,0 +1,29 @@
+# # comment:                                                     FEFF 9.9.1
+# # Source:
+# # Structure
+# # Reduced
+# # space
+# # abc:
+# # angles:
+# # sites:
+# # POT  SCF 100  7.0000   0, screened core-hole, AFOLP (folp(0)= 1.150)
+# # Abs   Z=29 Rmt= 1.190 Rnm= 1.306 K  shell
+# # Pot 1 Z=29 Rmt= 1.213 Rnm= 1.349
+# # Pot 2 Z= 8 Rmt= 1.044 Rnm= 1.122
+# # Gam_ch=1.729E+00 H-L exch Vi= 0.000E+00 Vr= 0.000E+00
+# # Mu=-7.213E+00eV kf=2.072E+00 Vint=-1.457E+01eV Rs_int= 1.750
+# FMS rfms= 9.0000
+# # PATH  Rmax=-1.000,  Keep_limit= 0.00, Heap_limit 0.00  Pwcrit= 2.50%
+#  S02=0.950  Temp=   0.00  Debye_temp=   0.00  Global_sig2= 0.00000
+#  Energy zero shift, vr, vi    0.00000E+00   0.00000E+00
+#  Curved wave amplitude ratio filter   4.000%
+#     file         sig2 tot  cw amp ratio   deg  nlegs   reff  inp sig2
+#     0/   0 paths used
+#  xsedge+ 50, used to normalize mu           2.4305E-04
+#  -----------------------------------------------------------------------
+#  omega    e    k    mu    mu0     chi     @#
+    8984.950     -9.651  -0.800  4.70752E-02  8.18991E-02 -3.48239E-02
+    8985.413     -9.188  -0.720  5.31633E-02  9.73126E-02 -4.41493E-02
+    8985.827     -8.773  -0.640  6.03605E-02  1.16911E-01 -5.65507E-02
+    8986.193     -8.408  -0.560  6.88419E-02  1.41739E-01 -7.28969E-02
+    8986.510     -8.091  -0.480  7.86645E-02  1.72449E-01 -9.37849E-02

@@ -10,8 +10,8 @@ from ..file_utils import (
 )
 
 
-def test_exhaustive_directory_search(dummydirectories):
-    with dummydirectories as tmpdir:
+def test_exhaustive_directory_search(dummyFullDirectoryStructure):
+    with dummyFullDirectoryStructure as tmpdir:
         d = exhaustive_directory_search(tmpdir, "submit.sbatch")
         for dd in d:
             assert "mp-390" not in Path(dd).parts[-2:]
