@@ -6,8 +6,8 @@ from autojob.file_utils import exhaustive_directory_search, run_command
 
 
 DEFAULT_INPUT_FILES = {
-    "FEFF": {"feff.inp"},
-    "VASP": {"INCAR", "POSCAR", "KPOINTS", "POTCAR"},
+    "FEFF": set(["feff.inp"]),
+    "VASP": set(["INCAR", "POSCAR", "KPOINTS", "POTCAR"]),
 }
 
 
@@ -157,6 +157,13 @@ def generate_report(root, filename, identifiers=DEFAULT_INPUT_FILES):
 
         Currently tested on: VASP 6.2.1, FEFF 9.9.1.
 
+    Notes
+    -----
+    What is checked given some calculation type is detailed below:
+    * VASP: If the job completed, the OUTCAR file will contain timing
+    information.
+    * FEFF: If the job completed, there will be a non-empty xmu.dat file.
+
     Parameters
     ----------
     root : os.PathLike
@@ -169,13 +176,6 @@ def generate_report(root, filename, identifiers=DEFAULT_INPUT_FILES):
         type, and sets as values, which identify input files that all must be
         contained in the directory to identify the directory as corresponding
         to a certain computation type. Default is DEFAULT_INPUT_FILES.
-
-    Notes
-    -----
-    What is checked given some calculation type is detailed below:
-    - VASP: If the job completed, the OUTCAR file will contain timing
-      information (see e.g. here: github.com/aiida-vasp/aiida-vasp/issues/287).
-    - FEFF: If the job completed, there will be a non-empty xmu.dat file.
 
     Returns
     -------
