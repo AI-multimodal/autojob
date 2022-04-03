@@ -96,3 +96,22 @@ def exhaustive_directory_search(root, filename):
     """
 
     return [xx.parent for xx in Path(root).rglob(filename)]
+
+
+def check_if_substring_match(lines, substring):
+    """Checks the provided lines and determines if a substring is present.
+
+    Parameters
+    ----------
+    lines : list of str
+        The lines to check for a substring match.
+    substring : str
+        The substring to match
+
+    Returns
+    -------
+    bool
+        True if the substring was found in any of the lines. False otherwise.
+    """
+
+    return any([substring in line for line in lines])

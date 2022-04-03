@@ -10,11 +10,23 @@ from ..file_utils import (
 )
 
 
-def test_exhaustive_directory_search(dummyFullDirectoryStructure):
-    with dummyFullDirectoryStructure as tmpdir:
+def test_exhaustive_directory_search(DummyDirectories):
+    with DummyDirectories() as tmpdir:
         d = exhaustive_directory_search(tmpdir, "submit.sbatch")
         for dd in d:
-            assert "mp-390" not in Path(dd).parts[-2:]
+            assert "no-submit-script" not in Path(dd).parts[-2:]
+
+
+def test_exhaustive_directory_search_VASP_only(DummyDirectories):
+    with DummyDirectories() as tmpdir:
+        d = exhaustive_directory_search(tmpdir, "INCAR")
+        all(["VASP" in key.parts[-2] for key in d])
+
+
+def test_exhaustive_directory_search_FEFF_only(DummyDirectories):
+    with DummyDirectories() as tmpdir:
+        d = exhaustive_directory_search(tmpdir, "feff.inp")
+        all(["FEFF" in key.parts[-2] for key in d])
 
 
 def test_run_command():

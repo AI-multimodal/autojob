@@ -1,15 +1,72 @@
 from pathlib import Path
 import pytest
 from tempfile import TemporaryDirectory
+from uuid import uuid4
 
 ABS_PATH = Path(Path(__file__).resolve().parent)
 
 
-class DummyDirectories(TemporaryDirectory):
+class _DummyDirectories(TemporaryDirectory):
     """A helper utility class for temporarily creating a large directory
     structure for tests to be conducted in. Will cleanup when done. The
     directories used are actually based on real input files using VASP, FEFF,
     etc."""
+
+    @staticmethod
+    def _get_dummy_file(success, filename):
+        root = ABS_PATH / Path("dummy_files")
+        d = root / Path("success" if success else "failure")
+        with open(d / Path(filename), "r") as f:
+            lines = f.readlines()
+        return "".join(lines)
+
+    @staticmethod
+    def _write_dummy_file(path, success, filename):
+        string = _DummyDirectories._get_dummy_file(success, filename)
+        # print(path, success, filename, string.split("\n")[-10:])
+        with open(path, "w") as f:
+            f.write(string)
+
+    @staticmethod
+    def _write_VASP_inputs(root, success=True):
+        """Helper method for "writing" the fake VASP input files.
+
+        Parameters
+        ----------
+        root : os.PathLike
+            Directory to save in.
+        success : bool, optional
+            If True, then writes the successful files.
+        has_submit_script : bool, optional
+            Description
+
+        """
+
+        for inp in ["INCAR", "KPOINTS", "POSCAR", "POTCAR"]:
+            (Path(root) / Path(inp)).touch()
+
+        _DummyDirectories._write_dummy_file(
+            Path(root) / Path("OUTCAR"), success, "OUTCAR"
+        )
+
+    @staticmethod
+    def _write_FEFF_inputs(root, success=True):
+        """Helper method for "writing" the fake FEFF input files.
+
+        Parameters
+        ----------
+        root : os.PathLike
+        """
+
+        for inp in ["feff.inp"]:
+            (Path(root) / Path(inp)).touch()
+
+        _DummyDirectories._write_dummy_file(
+            Path(root) / Path("feff.out"), success, "feff.out"
+        )
+        _DummyDirectories._write_dummy_file(
+            Path(root) / Path("xmu.dat"), success, "xmu.dat"
+        )
 
     def __enter__(self):
         """Constructs a dummy directory structure for testing methods that act
@@ -17,76 +74,32 @@ class DummyDirectories(TemporaryDirectory):
 
         name = super().__enter__()
 
-        d1 = [
-            "mp-1179358",
-            "mp-636827",
-            "mvc-11423",
-            "mp-25433",
-            "mp-655656",
-            "mvc-11600",
-            "no-submit-script",
-            "mp-685151",
-        ]
+        # Write a special directory for just checking that the exhaustive
+        # search method doesn't check directories without submit.sbatch
+        path = Path(name) / Path("no-submit-script") / Path(str(uuid4()))
+        path.mkdir(parents=True, exist_ok=False)
+        _DummyDirectories._write_VASP_inputs(path, success=True)
 
-        d2 = ["FEFF", "VASP"]
+        for failstate in [True, False]:
+            failstate_str = "success" if failstate else "failure"
 
-        input_files = {
-            "FEFF": ["feff.inp"],
-            "VASP": ["INCAR", "KPOINTS", "POSCAR", "POTCAR"],
-        }
-
-        for x1 in d1:
-            for x2 in d2:
-                path = Path(name) / Path(f"{x1}/{x2}")
+            for calc in ["FEFF", "VASP"]:
+                p1 = Path(name) / Path(f"{calc}-{failstate_str}")
+                path = p1 / Path(str(uuid4()))
                 path.mkdir(parents=True, exist_ok=False)
 
-                for inp in input_files[x2]:
-                    (path / Path(inp)).touch()
+                if calc == "FEFF":
+                    _DummyDirectories._write_FEFF_inputs(path, failstate)
+                elif calc == "VASP":
+                    _DummyDirectories._write_VASP_inputs(path, failstate)
+                else:
+                    raise RuntimeError
 
-                # Write the dummy submit scripts for everything except for
-                # no-submit-script
-                if x1 != "no-submit-script":
-                    (path / Path("submit.sbatch")).touch()
+                (path / Path("submit.sbatch")).touch()
 
         return name
 
 
 @pytest.fixture
-def dummyFullDirectoryStructure():
-    return DummyDirectories()
-
-
-@pytest.fixture
-def dummyVASPOUTCARFailure():
-    d = ABS_PATH / Path("dummy_files") / Path("failure")
-    with open(d / Path("OUTCAR"), "r") as f:
-        lines = f.readlines()
-    return "".join(lines)
-
-
-@pytest.fixture
-def dummyVASPOUTCARSuccess():
-    d = ABS_PATH / Path("dummy_files") / Path("success")
-    with open(d / Path("OUTCAR"), "r") as f:
-        lines = f.readlines()
-    return "".join(lines)
-
-
-@pytest.fixture
-def dummyFEFFSuccess():
-    d = ABS_PATH / Path("dummy_files") / Path("success")
-    with open(d / Path("feff.out"), "r") as f:
-        lines = f.readlines()
-    with open(d / Path("xmu.dat"), "r") as f:
-        lines_xmu = f.readlines()
-    return "".join(lines), "".join(lines_xmu)
-
-
-@pytest.fixture
-def dummyFEFFFailure():
-    d = ABS_PATH / Path("dummy_files") / Path("failure")
-    with open(d / Path("feff.out"), "r") as f:
-        lines = f.readlines()
-    with open(d / Path("xmu.dat"), "r") as f:
-        lines_xmu = f.readlines()
-    return "".join(lines), "".join(lines_xmu)
+def DummyDirectories():
+    return _DummyDirectories
