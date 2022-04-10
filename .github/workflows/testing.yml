@@ -45,3 +45,6 @@ jobs:
         set -vxeuo pipefail
         coverage run -m pytest -v
         coverage report
+        curl -Os https://uploader.codecov.io/latest/linux/codecov
+        chmod +x codecov
+        ./codecov
