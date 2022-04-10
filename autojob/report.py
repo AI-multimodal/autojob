@@ -7,9 +7,11 @@
     assumes these code versions.
 """
 
+from collections import Counter
 from pathlib import Path
 
-from autojob import CONFIG
+from autojob import logger
+
 from autojob.file_utils import (
     exhaustive_directory_search,
     run_command,
@@ -17,14 +19,38 @@ from autojob.file_utils import (
 )
 
 
-def check_computation_type(root, input_files=CONFIG["report.in"]):
+CONFIG = {
+    "in": {
+        "FEFF": ["feff.inp"],
+        "VASP": ["INCAR", "POSCAR", "KPOINTS", "POTCAR"],
+    },
+    "out": {
+        "FEFF": [["xmu.dat", None], ["feff.out", "feff ends at"]],
+        "VASP": [
+            [
+                "OUTCAR",
+                " General timing and accounting informations for this job:",
+            ]
+        ],
+    },
+}
+
+
+def check_computation_type(root, input_files=CONFIG["in"]):
     """Determines which type of computation has been completed in the directory
-    of interest.
+    of interest. In the cases when no input file types can be matched, or when
+    multiple input file types are found, warnings/errors will be logged and
+    None will be returned.
 
     Parameters
     ----------
     root : os.PathLike
         The directory containing the
+    input_files : dict, optional
+        A dictionary that contains keys corresponding to computation types
+        (e.g. VASP) and values of lists of file names. These file names must
+        _all_ be present in a given directory to confirm that the calculation
+        is of a certain type.
 
     Returns
     -------
@@ -41,10 +67,18 @@ def check_computation_type(root, input_files=CONFIG["report.in"]):
 
     # Check to see if for some reason there are multiple computations' input
     # files in one directory. This obvious is a problem.
-    assert sum(list(overlap.values())) == 1
+    N = sum(list(overlap.values()))
+    if N != 1:
+        if N < 1:
+            logger.warning(f"No matching input files found in {root}")
+        elif N > 1:
+            logger.error(f"More than one type of calculation found in {root}")
+        return None
 
     # Otherwise, we simply find which one is true
-    return [key for key, value in overlap.items() if value][0]
+    calc_type = [key for key, value in overlap.items() if value][0]
+    logger.debug(f"{root} identified as {calc_type}")
+    return calc_type
 
 
 def check_job_status(root, checks):
@@ -78,20 +112,19 @@ def check_job_status(root, checks):
                 return False
             if path.stat().st_size == 0:
                 return False
-            return True
+        else:
+            command = f"tail -n 100 {str(path)}"
+            res = run_command(command)
+            lines = res["stdout"].split("\n")
+            cond = check_if_substring_match(lines, str(substring))
 
-        command = f"tail -n 100 {str(path)}"
-        res = run_command(command)
-        lines = res["stdout"].split("\n")
-        cond = check_if_substring_match(lines, str(substring))
-
-        if not cond:
-            return False
+            if not cond:
+                return False
 
     return True
 
 
-def generate_report(root, filename, output_files=CONFIG["report.out"]):
+def generate_report(root, filename, output_files=CONFIG["out"]):
     """Generates a report of which jobs have finished, which are still ongoing
     and which have failed. Currently, returns True if the job completed with
     seemingly no issues, and False otherwise.
@@ -123,17 +156,27 @@ def generate_report(root, filename, output_files=CONFIG["report.out"]):
         boolean values, indicating the success status of the calculation.
     """
 
+    logger.info(f"Generating report at {root} (searching for {filename})")
+
     # Get the directories matching the filename of the directory search
     directories = exhaustive_directory_search(root, filename)
 
     # For each directory in the tree, determine the type of calculation that
     # was run.
     calculation_types = {dd: check_computation_type(dd) for dd in directories}
+    cc = Counter(list(calculation_types.values()))
 
     # Get the statuses
-    status = {
-        dd: check_job_status(dd, checks=output_files[ctype])
-        for dd, ctype in calculation_types.items()
-    }
+    status = dict()
+    complete = {ctype: 0 for ctype in cc.keys()}
+    for dd, ctype in calculation_types.items():
+        status[dd] = check_job_status(dd, checks=output_files[ctype])
+        complete[ctype] += int(status[dd])
+
+    for ctype, ncomplete in complete.items():
+        if ncomplete == cc[ctype]:
+            logger.success(f"{ctype}: all {ncomplete} complete")
+        else:
+            logger.warning(f"{ctype} incomplete: {ncomplete}/{cc[ctype]}")
 
     return status

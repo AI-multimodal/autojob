@@ -31,21 +31,23 @@ def generic_filter(names):
 
 logger.remove(0)  # Remove the default logger
 
-FMT = "<w>{name}</>:<w>{function}</> [<lvl>{level}</>] <lvl>{message}</>"
+OUT_FMT = "<lvl>{message}</>"
 
 
 STDOUT_LOGGER_ID = logger.add(
     sys.stdout,
     colorize=True,
-    filter=generic_filter(["DEBUG", "INFO", "SUCCESS"]),
-    format=FMT,
+    filter=generic_filter(["INFO", "SUCCESS"]),
+    format=OUT_FMT,
 )
+
+ERR_FMT = "<lvl>{level}:</> <lvl>{message}</>"
 
 STDERR_LOGGER_ID = logger.add(
     sys.stderr,
     colorize=True,
     filter=generic_filter(["WARNING", "ERROR", "CRITICAL"]),
-    format=FMT,
+    format=ERR_FMT,
 )
 
 ROOT = Path.home() / Path(".autojob")

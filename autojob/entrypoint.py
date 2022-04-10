@@ -10,6 +10,7 @@ import sys
 
 # from time import sleep, time
 
+from autojob import logger, STDOUT_LOGGER_ID, OUT_FMT, generic_filter
 from autojob.report import generate_report
 
 
@@ -25,12 +26,11 @@ def global_parser(sys_argv):
     ap = argparse.ArgumentParser(formatter_class=SortingHelpFormatter)
 
     ap.add_argument(
-        "--silent",
-        dest="silent",
+        "--debug",
+        dest="debug",
         default=False,
         action="store_true",
-        help="If specified, no output will be piped to the console. This "
-        "disables the console logger.",
+        help="If specified, enables the DEBUG stream to stdout.",
     )
 
     # --- Global options ---
@@ -61,6 +61,16 @@ def global_parser(sys_argv):
     return ap.parse_args(sys_argv)
 
 
+def enable_debug(logger_id=STDOUT_LOGGER_ID):
+    logger.remove(logger_id)
+    logger.add(
+        sys.stdout,
+        colorize=True,
+        filter=generic_filter(["DEBUG", "INFO", "SUCCESS"]),
+        format=OUT_FMT,
+    )
+
+
 def entrypoint():
     """Point of entry from the command line interface.
 
@@ -71,13 +81,14 @@ def entrypoint():
     """
 
     args = global_parser(sys.argv[1:])
+    if args.debug:
+        enable_debug()
 
     if args.runtype == "report":
-        d = generate_report(args.root, args.filename)
-        for key, value in d.items():
-            print(key, value)
+        generate_report(args.root, args.filename)
+
+    elif args.runtype == "modify":
+        pass
 
     else:
         raise RuntimeError(f"Unknown runtime type {args.runtype}")
-
-    print("done")
