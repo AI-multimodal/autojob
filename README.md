@@ -1,5 +1,7 @@
 # autojob
 
+[![codecov](https://codecov.io/gh/AI-multimodal/autojob/branch/master/graph/badge.svg?token=HTZQRGHULG)](https://codecov.io/gh/AI-multimodal/autojob)
+
 Simple utility for controlling linux jobs and handling error tracking in scientific code.
 
 * Free software: 3-clause BSD license
