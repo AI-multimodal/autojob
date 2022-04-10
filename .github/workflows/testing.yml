@@ -45,7 +45,8 @@ jobs:
         set -vxeuo pipefail
         coverage run -m pytest -v
 
-    - name: Code coverage reporting
-        uses: codecov/codecov-action@v1.0.11
-        with:
-          fail_ci_if_error: false
+    - name: Coverage
+      uses: codecov/codecov-action@v2
+      with:
+        fail_ci_if_error: false # optional (default = false)
+        verbose: true # optional (default = false)
