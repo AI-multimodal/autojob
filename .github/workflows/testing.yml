@@ -43,10 +43,12 @@ jobs:
       shell: bash -l {0}
       run: |
         set -vxeuo pipefail
-        coverage run -m pytest -v
+        coverage run --source=autojob -m pytest -v
 
-    - name: Coverage
-      uses: codecov/codecov-action@v2
-      with:
-        fail_ci_if_error: false # optional (default = false)
-        verbose: true # optional (default = false)
+    - name: Code coverage reporting
+      shell: bash -l {0}
+      run: |
+        set -vxeuo pipefail
+        curl -Os https://uploader.codecov.io/latest/linux/codecov
+        chmod +x codecov
+        ./codecov -f .coverage
