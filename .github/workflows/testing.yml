@@ -46,4 +46,4 @@ jobs:
         coverage run --source=autojob -m pytest -v
         curl -Os https://uploader.codecov.io/latest/linux/codecov
         chmod +x codecov
-        ./codecov -t ${CODECOV_TOKEN} -f .coverage
+        ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f .coverage
