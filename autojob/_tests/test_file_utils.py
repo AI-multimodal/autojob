@@ -11,22 +11,12 @@ from ..file_utils import (
 
 
 def test_exhaustive_directory_search(DummyDirectories):
-    with DummyDirectories() as tmpdir:
-        d = exhaustive_directory_search(tmpdir, "submit.sbatch")
-        for dd in d:
-            assert "no-submit-script" not in Path(dd).parts[-2:]
-
-
-def test_exhaustive_directory_search_VASP_only(DummyDirectories):
-    with DummyDirectories() as tmpdir:
-        d = exhaustive_directory_search(tmpdir, "INCAR")
-        all(["VASP" in key.parts[-2] for key in d])
-
-
-def test_exhaustive_directory_search_FEFF_only(DummyDirectories):
-    with DummyDirectories() as tmpdir:
-        d = exhaustive_directory_search(tmpdir, "feff.inp")
-        all(["FEFF" in key.parts[-2] for key in d])
+    dummy = DummyDirectories()
+    calc_names = list(dummy.calculations.keys())
+    with dummy as tmpdir:
+        for dd in exhaustive_directory_search(tmpdir, "submit.sbatch"):
+            assert "test_no_submit" not in Path(dd).parts[-2:]
+            assert Path(dd).parts[-1] in calc_names
 
 
 def test_run_command():

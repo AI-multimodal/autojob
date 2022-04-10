@@ -1,101 +1,90 @@
 from pathlib import Path
 import pytest
+import random
+import string
 from tempfile import TemporaryDirectory
 from uuid import uuid4
 
-ABS_PATH = Path(Path(__file__).resolve().parent)
+LETTERS = string.ascii_lowercase
+OUTCAR_TEST_LINE = " General timing and accounting informations for this job:"
+FEFFOUT_TEST_LINE = "feff ends at"
+
+
+def write_random_lines(filename, n=40, inject=None):
+    """Writes a bunch of random lines to the provided file buffer.
+
+    Parameters
+    ----------
+    filename : os.PathLike
+        Filename to save to.
+    n : int, optional
+        The number of random lines to write. Default is 40.
+    inject : str, optional
+        If not None, injects this string in a random place.
+    """
+
+    inject_location = None
+    if inject is not None:
+        inject_location = random.randint(0, n - 1)
+
+    with open(filename, "w") as f:
+        for ii in range(n):
+            if inject_location is not None and ii == inject_location:
+                f.write(f"{inject}\n")
+                continue
+            line = [random.choice(LETTERS) for _ in range(10)]
+            line = line * random.randint(1, 4)
+            f.write(f"{''.join(line)}\n")
 
 
 class _DummyDirectories(TemporaryDirectory):
     """A helper utility class for temporarily creating a large directory
-    structure for tests to be conducted in. Will cleanup when done. The
-    directories used are actually based on real input files using VASP, FEFF,
-    etc."""
+    structure for tests to be conducted in. Will cleanup when done."""
 
-    @staticmethod
-    def _get_dummy_file(success, filename):
-        root = ABS_PATH / Path("dummy_files")
-        d = root / Path("success" if success else "failure")
-        with open(d / Path(filename), "r") as f:
-            lines = f.readlines()
-        return "".join(lines)
-
-    @staticmethod
-    def _write_dummy_file(path, success, filename):
-        string = _DummyDirectories._get_dummy_file(success, filename)
-        # print(path, success, filename, string.split("\n")[-10:])
-        with open(path, "w") as f:
-            f.write(string)
-
-    @staticmethod
-    def _write_VASP_inputs(root, success=True):
-        """Helper method for "writing" the fake VASP input files.
-
-        Parameters
-        ----------
-        root : os.PathLike
-            Directory to save in.
-        success : bool, optional
-            If True, then writes the successful files.
-        has_submit_script : bool, optional
-            Description
-
-        """
-
-        for inp in ["INCAR", "KPOINTS", "POSCAR", "POTCAR"]:
-            (Path(root) / Path(inp)).touch()
-
-        _DummyDirectories._write_dummy_file(
-            Path(root) / Path("OUTCAR"), success, "OUTCAR"
-        )
-
-    @staticmethod
-    def _write_FEFF_inputs(root, success=True):
-        """Helper method for "writing" the fake FEFF input files.
-
-        Parameters
-        ----------
-        root : os.PathLike
-        """
-
-        for inp in ["feff.inp"]:
-            (Path(root) / Path(inp)).touch()
-
-        _DummyDirectories._write_dummy_file(
-            Path(root) / Path("feff.out"), success, "feff.out"
-        )
-        _DummyDirectories._write_dummy_file(
-            Path(root) / Path("xmu.dat"), success, "xmu.dat"
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.calculations = {
+            "test1": ["test.txt", "input.txt", "LOG", "submit.sbatch"],
+            "test2": ["INCAR", "POTCAR", "output.out", "submit.sbatch"],
+            "test3_vasp-like": [
+                "INCAR",
+                "POSCAR",
+                "KPOINTS",
+                "POTCAR",
+                "OUTCAR",
+                "submit.sbatch",
+            ],
+            "test4_feff-like": [
+                "feff.inp",
+                "feff.out",
+                "xmu.dat",
+                "submit.sbatch",
+            ],
+            "test_no_submit": ["test_input.txt", "test_input2.txt"],
+        }
 
     def __enter__(self):
         """Constructs a dummy directory structure for testing methods that act
-        on input files."""
+        on various files. This also creates the dummy directory structures."""
 
+        # The parent __enter__ method will actually create the dummy directory
+        # and return the path to it
         name = super().__enter__()
 
-        # Write a special directory for just checking that the exhaustive
-        # search method doesn't check directories without submit.sbatch
-        path = Path(name) / Path("no-submit-script") / Path(str(uuid4()))
-        path.mkdir(parents=True, exist_ok=False)
-        _DummyDirectories._write_VASP_inputs(path, success=True)
+        for key, value in self.calculations.items():
+            path = Path(name) / Path(str(uuid4())) / Path(key)
+            path.mkdir(exist_ok=False, parents=True)
 
-        for failstate in [True, False]:
-            failstate_str = "success" if failstate else "failure"
-
-            for calc in ["FEFF", "VASP"]:
-                p1 = Path(name) / Path(f"{calc}-{failstate_str}")
-                path = p1 / Path(str(uuid4()))
-                path.mkdir(parents=True, exist_ok=False)
-
-                if calc == "FEFF":
-                    _DummyDirectories._write_FEFF_inputs(path, failstate)
-                elif calc == "VASP":
-                    _DummyDirectories._write_VASP_inputs(path, failstate)
+            for filename in value:
+                target = path / filename
+                if filename == "OUTCAR":
+                    write_random_lines(target, 40, OUTCAR_TEST_LINE)
+                elif filename == "feff.out":
+                    write_random_lines(target, 40, FEFFOUT_TEST_LINE)
+                elif filename == "xmu.dat":
+                    write_random_lines(target, 40)
                 else:
-                    raise RuntimeError
-
-                (path / Path("submit.sbatch")).touch()
+                    (path / Path(target)).touch()
 
         return name
 

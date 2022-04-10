@@ -105,12 +105,15 @@ def check_job_status(root, checks):
 
     for filename, substring in checks:
         path = Path(root) / Path(filename)
+        logger.debug(f"Running checks {checks} on {path}")
 
         # Check for existence and that the file size is > 0
         if substring is None:
             if not path.exists():
+                logger.debug(f"{path} does not exist - status FALSE")
                 return False
             if path.stat().st_size == 0:
+                logger.debug(f"{path} is empty - status FALSE")
                 return False
         else:
             command = f"tail -n 100 {str(path)}"
@@ -119,8 +122,10 @@ def check_job_status(root, checks):
             cond = check_if_substring_match(lines, str(substring))
 
             if not cond:
+                logger.debug(f"{path} missing {substring} - status FALSE")
                 return False
 
+    logger.debug(f"{path} - status TRUE")
     return True
 
 
@@ -128,6 +133,12 @@ def generate_report(root, filename, output_files=CONFIG["out"]):
     """Generates a report of which jobs have finished, which are still ongoing
     and which have failed. Currently, returns True if the job completed with
     seemingly no issues, and False otherwise.
+
+    .. warning::
+
+        If the directories of interest cannot be identified, None will be
+        returned. This happens if check_computation_type returns None. Warnings
+        are issued in this case, and these directories will be ignored.
 
     Notes
     -----
@@ -164,14 +175,26 @@ def generate_report(root, filename, output_files=CONFIG["out"]):
     # For each directory in the tree, determine the type of calculation that
     # was run.
     calculation_types = {dd: check_computation_type(dd) for dd in directories}
+    calculation_types = {
+        key: value
+        for key, value in calculation_types.items()
+        if value is not None
+    }
     cc = Counter(list(calculation_types.values()))
 
     # Get the statuses
     status = dict()
     complete = {ctype: 0 for ctype in cc.keys()}
+    report = {ctype: {"success": [], "fail": []} for ctype in cc.keys()}
     for dd, ctype in calculation_types.items():
-        status[dd] = check_job_status(dd, checks=output_files[ctype])
+        checks = output_files[ctype] if ctype is not None else None
+        status[dd] = check_job_status(dd, checks=checks)
         complete[ctype] += int(status[dd])
+
+        if status[dd]:
+            report[ctype]["success"].append(dd)
+        else:
+            report[ctype]["fail"].append(dd)
 
     for ctype, ncomplete in complete.items():
         if ncomplete == cc[ctype]:
@@ -179,4 +202,4 @@ def generate_report(root, filename, output_files=CONFIG["out"]):
         else:
             logger.warning(f"{ctype} incomplete: {ncomplete}/{cc[ctype]}")
 
-    return status
+    return report
