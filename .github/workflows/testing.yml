@@ -44,11 +44,6 @@ jobs:
       run: |
         set -vxeuo pipefail
         coverage run --source=autojob -m pytest -v
-
-    - name: Code coverage reporting
-      shell: bash -l {0}
-      run: |
-        set -vxeuo pipefail
         curl -Os https://uploader.codecov.io/latest/linux/codecov
         chmod +x codecov
         ./codecov -f .coverage
