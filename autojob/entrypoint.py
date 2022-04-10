@@ -1,6 +1,7 @@
 import argparse
 from argparse import HelpFormatter, ArgumentDefaultsHelpFormatter
 from operator import attrgetter
+from pathlib import Path
 
 # from os import getpid
 # from os import kill as kill_pid
@@ -10,8 +11,9 @@ import sys
 
 # from time import sleep, time
 
-from autojob import logger, STDOUT_LOGGER_ID, OUT_FMT, generic_filter
+from autojob import logger
 from autojob.report import generate_report
+from autojob.file_utils import save_json
 
 
 # https://stackoverflow.com/questions/
@@ -30,7 +32,8 @@ def global_parser(sys_argv):
         dest="debug",
         default=False,
         action="store_true",
-        help="If specified, enables the DEBUG stream to stdout.",
+        help="If specified, enables the DEBUG stream to stdout. This also "
+        "changes the logging format to make it better for detecting issues.",
     )
 
     # --- Global options ---
@@ -61,16 +64,6 @@ def global_parser(sys_argv):
     return ap.parse_args(sys_argv)
 
 
-def enable_debug(logger_id=STDOUT_LOGGER_ID):
-    logger.remove(logger_id)
-    logger.add(
-        sys.stdout,
-        colorize=True,
-        filter=generic_filter(["DEBUG", "INFO", "SUCCESS"]),
-        format=OUT_FMT,
-    )
-
-
 def entrypoint():
     """Point of entry from the command line interface.
 
@@ -81,11 +74,11 @@ def entrypoint():
     """
 
     args = global_parser(sys.argv[1:])
-    if args.debug:
-        enable_debug()
+    logger.debug(f"Command line args: {args}")
 
     if args.runtype == "report":
-        generate_report(args.root, args.filename)
+        d = generate_report(args.root, args.filename)
+        save_json(d, Path(args.root) / Path("report.json"))
 
     elif args.runtype == "modify":
         pass

@@ -192,9 +192,9 @@ def generate_report(root, filename, output_files=CONFIG["out"]):
         complete[ctype] += int(status[dd])
 
         if status[dd]:
-            report[ctype]["success"].append(dd)
+            report[ctype]["success"].append(str(dd))
         else:
-            report[ctype]["fail"].append(dd)
+            report[ctype]["fail"].append(str(dd))
 
     for ctype, ncomplete in complete.items():
         if ncomplete == cc[ctype]:
