@@ -1,19 +1,17 @@
 import argparse
 from argparse import HelpFormatter, ArgumentDefaultsHelpFormatter
+from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
-
-# from os import getpid
-# from os import kill as kill_pid
-# from signal import SIGTERM
-# from pathlib import Path
 import sys
-
-# from time import sleep, time
 
 from autojob import logger
 from autojob.report import generate_report
-from autojob.file_utils import save_json
+from autojob.tether import tether_constructor
+from autojob.file_utils import save_json, read_json
+
+
+NOW = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
 
 # https://stackoverflow.com/questions/
@@ -34,6 +32,12 @@ def global_parser(sys_argv):
         action="store_true",
         help="If specified, enables the DEBUG stream to stdout. This also "
         "changes the logging format to make it better for detecting issues.",
+    )
+
+    ap.add_argument(
+        "--autojob-root",
+        dest="autojob_root",
+        default=Path.home() / Path(".autojob"),
     )
 
     # --- Global options ---
@@ -61,6 +65,25 @@ def global_parser(sys_argv):
         help="Filename to search for.",
     )
 
+    tether_subparser = subparsers.add_parser(
+        "tether",
+        formatter_class=SortingHelpFormatter,
+        description="Allows for tethering multiple jobs into a single job. "
+        "See the documentation for more details.",
+    )
+
+    tether_subparser.add_argument(
+        "root", help="Path to the directory to tether."
+    )
+
+    tether_subparser.add_argument(
+        "--config",
+        dest="config",
+        default="feff",
+        help="Reference to the configuration contained in "
+        "$HOME/.autojob/tether. The .json suffix is omitted.",
+    )
+
     return ap.parse_args(sys_argv)
 
 
@@ -82,6 +105,19 @@ def entrypoint(args=sys.argv[1:]):
 
     elif args.runtype == "modify":
         pass
+
+    elif args.runtype == "tether":
+        config_root = args.autojob_root / Path("tether")
+        config = read_json(config_root / Path(f"{args.config}.json"))
+        target_directory = Path.cwd() / Path(f"tether-staged-{NOW}")
+        tether_constructor(
+            args.root,
+            config["filename"],
+            target_directory,
+            config["calculations_per_staged_job"],
+            config["slurm_header_lines"],
+            config["executable"],
+        )
 
     else:
         raise RuntimeError(f"Unknown runtime type {args.runtype}")
