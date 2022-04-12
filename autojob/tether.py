@@ -42,7 +42,7 @@ def get_file_lines(slurm_header_lines, chunk, executable_line):
     for dd in chunk:
         file_lines.append(f"cd {dd.absolute()}")
         file_lines.append(executable_line)
-    file_lines.append("\nexit")
+    file_lines.append("\nwait\nexit")
     return file_lines
 
 
