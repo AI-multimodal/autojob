@@ -64,7 +64,7 @@ def global_parser(sys_argv):
     return ap.parse_args(sys_argv)
 
 
-def entrypoint():
+def entrypoint(args=sys.argv[1:]):
     """Point of entry from the command line interface.
 
     Raises
@@ -73,7 +73,7 @@ def entrypoint():
         If unknown runtime types are provided.
     """
 
-    args = global_parser(sys.argv[1:])
+    args = global_parser(args)
     logger.debug(f"Command line args: {args}")
 
     if args.runtype == "report":

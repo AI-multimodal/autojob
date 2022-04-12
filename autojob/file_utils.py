@@ -91,7 +91,7 @@ def exhaustive_directory_search(root, filename):
 
     Returns
     -------
-    list of pathlib.PosixPath
+    list of os.PathLike
         A list of directories containing the filename provided.
     """
 
