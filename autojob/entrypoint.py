@@ -109,7 +109,10 @@ def entrypoint(args=sys.argv[1:]):
     elif args.runtype == "tether":
         config_root = args.autojob_root / Path("tether")
         config = read_json(config_root / Path(f"{args.config}.json"))
-        target_directory = Path.cwd() / Path(f"tether-staged-{NOW}")
+        staging_name = config["staging_directory"]
+        if staging_name is None:
+            staging_name = f"tether-staged-{NOW}"
+        target_directory = Path.cwd() / Path(staging_name)
         tether_constructor(
             args.root,
             config["filename"],

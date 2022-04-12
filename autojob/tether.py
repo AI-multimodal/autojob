@@ -54,23 +54,35 @@ def tether_constructor(
     slurm_header_lines,
     executable_line,
 ):
-    """Summary
+    """The tether constructor. Writes composite SLURM jobs.
 
     Parameters
     ----------
-    root : TYPE
-        Description
-    filename : TYPE
-        Description
-    staging_directory : TYPE
-        Description
-    calculations_per_staged_job : TYPE
-        Description
-    slurm_header_lines : TYPE
-        Description
-    executable_line : TYPE
-        Description
+    root : os.PathLike
+        The path (absolute or relative) to the directory from which to conduct
+        the exhaustive search.
+    filename : str
+        The exact name of the file which identifies a directory as one of
+        interest.
+    staging_directory : os.PathLike
+        The directory to place the submit scripts.
+    calculations_per_staged_job : int
+        The number of calculations per composite staged job. Usually this
+        should be more or less equal to the number of cores on a node.
+    slurm_header_lines : list of str
+        The lines for the SLURM job header.
+    executable_line : str
+        The executable line. Should end in a & such that multiple jobs can
+        be run in parallel.
     """
+
+    if "&" not in executable_line[-2:]:
+        logger.critical(
+            f"& is not found at the end of executable line {executable_line}. "
+            "These are required for the tether_constructor to allow jobs to "
+            "run in parallel. Tether has not written anything. Exiting."
+        )
+        sys.exit(1)
 
     logger.info(f"Tethering jobs for {root}, looking for filename {filename}")
     logger.info(f"Staging to {staging_directory}")
@@ -79,14 +91,6 @@ def tether_constructor(
     logger.debug(f"Slurm header is {slurm_header_lines}")
     directories = exhaustive_directory_search(root, filename)
     chunked_directories = list(chunks(directories, calculations_per_staged_job))
-
-    if "&" not in executable_line:
-        logger.critical(
-            f"& is not found in the executable line {executable_line}. "
-            "These are required for the tether_constructor to allow jobs to "
-            "run in parallel. Tether has not written anything. Exiting."
-        )
-        sys.exit(1)
 
     logger.info("Constructing the chunked directory lines")
     submit_script_lines = []
