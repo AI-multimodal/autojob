@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from subprocess import Popen, PIPE
 from time import time
+from sys import platform
 
 
 def save_json(d, path, indent=4, sort_keys=False):
@@ -75,6 +76,23 @@ def run_command(cmd):
     }
 
 
+def _exhaustive_directory_search_linux_darwin(root, filename):
+    """Summary
+    
+    Parameters
+    ----------
+    root : TYPE
+        Description
+    filename : TYPE
+        Description
+    """
+
+    find_command = f'find {root} -name "{filename}"'
+    out = run_command(find_command)
+    if int(out["exitcode"]) != 0:
+        raise RuntimeError(f"Unknown error running `find` {out}")
+    return out["stdout"].split()
+
 def exhaustive_directory_search(root, filename):
     """Executes an exhaustive, recursive directory search of all downstream
     directories, finding directories which contain a file matching the provided
@@ -95,6 +113,8 @@ def exhaustive_directory_search(root, filename):
         A list of directories containing the filename provided.
     """
 
+    if platform in ["linux", "linux2", "darwin"]:
+        return _exhaustive_directory_search_linux_darwin(root, filename)
     return [xx.parent for xx in Path(root).rglob(filename)]
 
 
