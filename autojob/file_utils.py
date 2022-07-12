@@ -77,14 +77,16 @@ def run_command(cmd):
 
 
 def _exhaustive_directory_search_linux_darwin(root, filename):
-    """Summary
+    """Executes a recursive directory search using the ``find`` bash command.
     
     Parameters
     ----------
-    root : TYPE
-        Description
-    filename : TYPE
-        Description
+    root : os.PathLike
+    filename : str
+
+    Returns
+    -------
+    list of os.PathLike
     """
 
     find_command = f'find {root} -name "{filename}"'

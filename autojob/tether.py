@@ -9,8 +9,6 @@ from math import floor, log10
 from pathlib import Path
 import sys
 
-from tqdm import tqdm
-
 from autojob import logger
 from autojob.file_utils import exhaustive_directory_search
 
@@ -94,7 +92,7 @@ def tether_constructor(
 
     logger.info("Constructing the chunked directory lines")
     submit_script_lines = []
-    for chunk in tqdm(chunked_directories):
+    for chunk in chunked_directories:
 
         # For each chunk, we write a single SLURM script which changes
         # directories into the one where the executable should be
@@ -106,7 +104,7 @@ def tether_constructor(
     logger.info(f"Saving {L} submit scripts to staging directory")
     oom = floor(log10(L)) + 1
     target_root = Path(staging_directory)
-    for ii, submit_script in enumerate(tqdm(submit_script_lines)):
+    for ii, submit_script in enumerate(submit_script_lines):
         dd = target_root / Path(str(ii).zfill(oom))
         dd.mkdir(exist_ok=False, parents=True)
         with open(dd / Path("submit.sbatch"), "w") as f:
