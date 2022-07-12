@@ -16,7 +16,7 @@ else:
     PARAMS = None
 
 
-def get_slurm_job_status(user=PARAMS["SLURM_username"]):
+def get_slurm_job_status(user=None):
     """Summary
     
     Parameters
@@ -24,6 +24,14 @@ def get_slurm_job_status(user=PARAMS["SLURM_username"]):
     user : TYPE, optional
         Description
     """
+
+    if user is None:
+        if PARAMS is not None:
+            user = PARAMS["user"]
+        else:
+            out = run_command("whoami")
+            user = out["stdout"]
+            logger.warning(f"Using whoami for SLURM user: {user}")
 
     command = "squeue -u mcarbone | awk 'NR!=1'"
     out = run_command(command)
