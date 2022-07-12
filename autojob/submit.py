@@ -33,7 +33,7 @@ def get_slurm_job_status(user=None):
             user = out["stdout"]
             logger.warning(f"Using whoami for SLURM user: {user}")
 
-    command = "squeue -u mcarbone | awk 'NR!=1'"
+    command = f"squeue -u {user} | awk 'NR!=1'"
     out = run_command(command)
     if int(out["exitcode"]) != 0:
         raise RuntimeError(f"Uknown error running get_slurm_job_status {out}")
